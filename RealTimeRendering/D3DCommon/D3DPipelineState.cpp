@@ -264,7 +264,7 @@ void RTR::GfxPsoManipulator::IAAddElement(const char* name, DXGI_FORMAT format)
 {
     auto* ptrElement = m_ptrInputElements->PeekAndPushNext();
     ptrElement->SemanticName = name;
-    ptrElement->SemanticIndex = m_ptrInputElements->GetUsage() - 1;
+    ptrElement->SemanticIndex = 0;
     ptrElement->Format = format;
     ptrElement->InputSlot = 0;
     ptrElement->AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
