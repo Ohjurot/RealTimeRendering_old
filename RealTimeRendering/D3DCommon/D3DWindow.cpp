@@ -2,6 +2,16 @@
 
 RTR::WindowCls RTR::WindowCls::s_clsInstance;
 
+bool RTR::WindowListener::__handleWindowEvent(Window* wnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* ptrResult)
+{
+    // Return if we handle this
+    if (HandleWindowEvent(wnd, msg, wParam, lParam, ptrResult))
+        return true;
+
+    // Pass to next
+    return ptrNextWindowListener ? ptrNextWindowListener->__handleWindowEvent(wnd, msg, wParam, lParam, ptrResult) : false;
+}
+
 LPCWSTR RTR::WindowCls::GetWindowClassName()
 {
     return L"RTR\\Window\\Cls";
@@ -118,6 +128,17 @@ RTR::Window::~Window()
     }
 }
 
+void RTR::Window::AddCustomEventListener(WindowListener* listener)
+{
+    // Find first null ref
+    WindowListener** ppListener = &m_ptrWindowListener;
+    while (*ppListener)
+        ppListener = &((*ppListener)->ptrNextWindowListener);
+
+    // Set it
+    *ppListener = listener;
+}
+
 bool RTR::Window::ProcessWindowEvents()
 {
     // Will windows has events in the queue handle them
@@ -229,6 +250,7 @@ LRESULT RTR::Window::windowMsgHandler__run(HWND wnd, UINT msg, WPARAM wParam, LP
 
 bool RTR::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* ptrResult)
 {
+    // Switch on messages
     switch (msg)
     {
         // On close event flag the window so it will close
@@ -239,12 +261,15 @@ bool RTR::Window::WindowEvent(UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* p
         // Resize
         case WM_SIZE:
             m_needResize = (LOWORD(lParam) != m_bufferCurrentWidth || HIWORD(lParam) != m_bufferCurrentHeight);
-            // We are just listening - windows should still do its work
-            return false;
+            // We are just listening - client & imgui wants to know that!
+            // fall down to default :-)
 
         // By default dont handle message here
         default:
-            return false;
+            if (m_ptrWindowListener)
+                return m_ptrWindowListener->__handleWindowEvent(this, msg, wParam, lParam, ptrResult);
+            else
+                return false;
     }
 }
 

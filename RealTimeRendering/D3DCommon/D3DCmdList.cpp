@@ -228,6 +228,15 @@ void RTR::D3DCommandList::BindRootConfiguration(const RootConfiguration& refRoot
     }
 }
 
+void RTR::D3DCommandList::BindDescriptorHeaps(ID3D12DescriptorHeap* heap1, ID3D12DescriptorHeap* heap2)
+{
+    // Only expecting SRV_ ... and SAMPLER
+    ID3D12DescriptorHeap* heaps[2] = {heap1, heap2};
+
+    // Set descriptor heaps
+    m_ptrList->SetDescriptorHeaps(heap2 ? 2 : 1, heaps);
+}
+
 void RTR::D3DCommandList::Draw(unsigned int vertexOrIndexCount, unsigned int instanceCount)
 {
     if (m_hasIndexBuffer)

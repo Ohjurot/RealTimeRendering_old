@@ -1,5 +1,7 @@
 [requires]
 assimp/5.1.0
+imgui/1.87
+imguizmo/cci.20210223
 
 [options]
 

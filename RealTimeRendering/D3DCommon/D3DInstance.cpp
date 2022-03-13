@@ -5,7 +5,12 @@ ComPointer<ID3D12Debug5> __global__d3dinstance_ptrDebug;
 ComPointer<ID3D12DebugDevice2> __global__d3dinstance_ptrDebugDevice;
 #endif
 ComPointer<ID3D12Device9> __global__d3dinstance_ptrDevice;
-ComPointer<IDXGIFactory7>__global__d3dinstance_ptrGIFactory;
+ComPointer<IDXGIFactory7> __global__d3dinstance_ptrGIFactory;
+
+UINT __global__d3dinstance_handleIncrement_CBV_SRV_UAV;
+UINT __global__d3dinstance_handleIncrement_RTV;
+UINT __global__d3dinstance_handleIncrement_DSV;
+UINT __global__d3dinstance_handleIncrement_SAMPLER;
 
 bool RTR::InitD3D12()
 {
@@ -33,6 +38,12 @@ bool RTR::InitD3D12()
                 __global__d3dinstance_ptrDevice->SetName(L"D3D12 Device Instance (will live forever)");
                 __global__d3dinstance_ptrDevice.queryInterface(__global__d3dinstance_ptrDebugDevice);
                 #endif
+
+                // Get handle increments
+                __global__d3dinstance_handleIncrement_CBV_SRV_UAV = __global__d3dinstance_ptrDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+                __global__d3dinstance_handleIncrement_RTV = __global__d3dinstance_ptrDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+                __global__d3dinstance_handleIncrement_DSV = __global__d3dinstance_ptrDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+                __global__d3dinstance_handleIncrement_SAMPLER = __global__d3dinstance_ptrDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
             }
         }
     }
@@ -83,4 +94,21 @@ const D3D12_HEAP_PROPERTIES* RTR::GetD3D12ReadbackHeapProperites()
 {
     static D3D12_HEAP_PROPERTIES prop = { D3D12_HEAP_TYPE_READBACK, D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, NULL, NULL };
     return &prop;
+}
+
+UINT RTR::GetD3D12HandleIncrement(D3D12_DESCRIPTOR_HEAP_TYPE heapType)
+{
+    switch (heapType)
+    {
+        case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+            return __global__d3dinstance_handleIncrement_CBV_SRV_UAV;
+        case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
+            return __global__d3dinstance_handleIncrement_RTV;
+        case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
+            return __global__d3dinstance_handleIncrement_DSV;
+        case D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER:
+            return __global__d3dinstance_handleIncrement_SAMPLER;
+        default:
+            return 0;
+    }
 }

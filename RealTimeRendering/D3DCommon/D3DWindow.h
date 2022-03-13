@@ -7,15 +7,34 @@
 
 namespace RTR
 {
+    // Fwd decl
+    class Window;
+
+    // Window listener
+    class WindowListener
+    {
+        public:
+            // Virtual function that will handle the event
+            virtual bool HandleWindowEvent(Window* wnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* ptrResult) = 0;
+
+        protected:
+            // Function
+            bool __handleWindowEvent(Window* wnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT* ptrResult);
+
+            // Expose next listener
+            friend class Window;
+            WindowListener* ptrNextWindowListener = nullptr;
+    };
+
     // Manager for window class
     class WindowCls
     {
         public:
-            // Retive name of this window class
+            // Retrive name of this window class
             static LPCWSTR GetWindowClassName();
 
         private:
-            // Singelton class management
+            // Singleton class management
             WindowCls();
             ~WindowCls();
             static WindowCls s_clsInstance;
@@ -36,11 +55,19 @@ namespace RTR
             // Assign
             Window& operator=(const Window&) = delete;
 
+            // Set listener
+            void AddCustomEventListener(WindowListener* listener);
+            // Expose winapi handle
+            inline HWND GetWindowHandle()
+            {
+                return m_windowHandle;
+            }
+
             // Will return true while window has not been closed
             bool ProcessWindowEvents();
             // Return true if window size has changed and d3d12 requires resizing
             bool NeedsResize();
-            // Will resize the directx components now
+            // Will resize the DirectX components now
             void Resize();
 
             // Get current frame index
@@ -92,6 +119,9 @@ namespace RTR
             // Window flags
             bool m_shouldClose = false, m_needResize = false;
             unsigned int m_bufferCurrentWidth = 1920, m_bufferCurrentHeight = 1080;
+
+            // Custom window listener
+            WindowListener* m_ptrWindowListener = nullptr;
 
             // Handle to the widows window
             HWND m_windowHandle;

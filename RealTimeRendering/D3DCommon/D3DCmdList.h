@@ -77,11 +77,24 @@ namespace RTR
             // Bind root configuration
             void BindRootConfiguration(const RootConfiguration& refRootConfig);
 
-            // Draws instanced (1 by default) with or without index buffer (determained by last call to IAPrepare)
+            // Bind descriptor heaps
+            void BindDescriptorHeaps(ID3D12DescriptorHeap* heap1, ID3D12DescriptorHeap* heap2 = nullptr);
+
+            // Draws instanced (1 by default) with or without index buffer (determined by last call to IAPrepare)
             void Draw(unsigned int vertexOrIndexCount, unsigned int instanceCount = 1);
 
             // Execute command list
             void ExecutSync();
+
+            // Allow external command list access
+            inline explicit operator ID3D12GraphicsCommandList* ()
+            {
+                return m_ptrList;
+            }
+            inline explicit operator ID3D12GraphicsCommandList6*()
+            {
+                return m_ptrList;
+            }
 
         private:
             // Internal helpers for less code duplication

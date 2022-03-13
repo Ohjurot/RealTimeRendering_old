@@ -3,8 +3,11 @@
 #include <D3DCommon/D3DWindow.h>
 #include <D3DCommon/D3DQueue.h>
 #include <D3DCommon/D3DCmdList.h>
+#include <D3DCommon/D3DDescriptorHeap.h>
 #include <D3DMemory/D3DUploadBuffer.h>
+
 #include <Util/DirWatcher.h>
+#include <imgui/ImGuiManager.h>
 
 #include <exception>
 
@@ -18,11 +21,16 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
     // Init D3D12 and run application
     if (InitD3D12())
     {
+        // Common
         D3DQueue queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
         D3DCommandList list(queue);
         D3DUploadBuffer uploadBuffer(MemMiB(128));
 
+        // Window
         Window wnd(L"RTR Window", queue);
+        ImGuiManager::Init(&wnd);
+
+        // App loop
         while (wnd.ProcessWindowEvents())
         {
             // Resize window if required
@@ -36,6 +44,13 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
             list.BeginRender(wnd.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, wnd.GetCurrentCPUHandle());
             
             // TODO: Rendering calls
+
+            // === ImGui ===
+            ImGuiManager::NewFrame();
+            static bool show_demo_window = true;
+            if (show_demo_window)
+                ImGui::ShowDemoWindow(&show_demo_window);
+            ImGuiManager::Render(list);
                         
             // === END DRAW ===
             list.EndRender();
@@ -47,6 +62,10 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
             // Check for file change events
             DirWatchRefresh();
         }
+
+        // Destroy imgui
+        ImGuiManager::Shutdown();
+
         queue.Flush(2);
         list.~D3DCommandList();
 

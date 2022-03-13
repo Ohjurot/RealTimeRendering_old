@@ -17,4 +17,7 @@ namespace RTR
     const D3D12_HEAP_PROPERTIES* GetD3D12DefaultHeapProperites();
     const D3D12_HEAP_PROPERTIES* GetD3D12UploadHeapProperites();
     const D3D12_HEAP_PROPERTIES* GetD3D12ReadbackHeapProperites();
+
+    // Handle increment
+    UINT GetD3D12HandleIncrement(D3D12_DESCRIPTOR_HEAP_TYPE heapType);
 }
