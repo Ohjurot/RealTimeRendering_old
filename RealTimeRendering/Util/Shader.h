@@ -5,8 +5,8 @@
 #include <Util/HrException.h>
 #include <Util/DirWatcher.h>
 
-#include <dxc/dxcapi.h>
-#include <dxc/d3d12shader.h>
+#include <dxcapi.h>
+#include <d3d12shader.h>
 
 #include <fstream>
 
@@ -46,7 +46,7 @@
 #define RTR_SHADER_HS_6_5 L"hs_6_5"
 #define RTR_SHADER_HS_6_6 L"hs_6_6"
 
-// Comain shader
+// Domain shader
 #define RTR_SHADER_DS_6_0 L"ds_6_0"
 #define RTR_SHADER_DS_6_1 L"ds_6_1"
 #define RTR_SHADER_DS_6_2 L"ds_6_2"
