@@ -1,0 +1,7 @@
+[requires]
+assimp/5.1.0
+
+[options]
+
+[generators]
+premake
