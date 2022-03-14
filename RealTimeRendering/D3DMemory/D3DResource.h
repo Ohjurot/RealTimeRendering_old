@@ -14,6 +14,12 @@ namespace RTR
             // Ensures the correct resource state (does a barrier if required!) Will return true when a transition occured
             bool EnsureResourceState(D3DCommandList& cmdList, D3D12_RESOURCE_STATES state);
 
+            // Get buffer address
+            inline D3D12_GPU_VIRTUAL_ADDRESS GetAddress()
+            {
+                return m_ptrResource->GetGPUVirtualAddress();
+            }
+
             // Retrieve the currently stored resource state
             inline D3D12_RESOURCE_STATES GetResourceState()
             {

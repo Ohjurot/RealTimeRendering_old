@@ -42,17 +42,14 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
 
             // === BEGIN DRAW ===
             list.BeginRender(wnd.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, wnd.GetCurrentCPUHandle());
+            ImGuiManager::NewFrame();
             
             // TODO: Rendering calls
-
-            // === ImGui ===
-            ImGuiManager::NewFrame();
-            static bool show_demo_window = true;
-            if (show_demo_window)
-                ImGui::ShowDemoWindow(&show_demo_window);
-            ImGuiManager::Render(list);
+            ImGui::ShowDemoWindow();
                         
+
             // === END DRAW ===
+            ImGuiManager::Render(list);
             list.EndRender();
 
             // Present frame
