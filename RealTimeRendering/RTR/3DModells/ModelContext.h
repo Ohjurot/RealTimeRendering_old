@@ -32,6 +32,9 @@ namespace RTR
         }
     };
 
+    // Callback for vertex creation
+    typedef void(*FModelVertexCallback)(void* vtxOut, size_t idx, const aiMesh* ptrMesh);
+
     // Class that manages model uploading and stuff context 
     class ModelContext
     {
@@ -45,7 +48,7 @@ namespace RTR
             ModelContext& operator=(const ModelContext&) = delete;
 
             // Load a model form disk
-            ModelInfo LoadModel(const char* filePath, D3DUploadBuffer& uploader);
+            ModelInfo LoadModel(const char* filePath, D3DUploadBuffer& uploader, size_t vertexSize, FModelVertexCallback callback);
             MeshInfo GetMeshInfo(ModelInfo& modelInfo, size_t idx = 0);
 
             // Retrive buffer resource

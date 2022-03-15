@@ -31,6 +31,13 @@ class BasicRendering : public D3DPipelineState
             D3DPipelineState(PipelineStateType::Graffics)
         {}
 
+        // Vertex creation callback
+        static void CbVertexCreate(Vertex* ptrVtx, size_t vtxIdx, const aiMesh* ptrMesh)
+        {
+            memcpy(ptrVtx, &ptrMesh->mVertices[vtxIdx], sizeof(aiVector3D));
+            ptrVtx->pw = 1.0f;
+        }
+
     protected:
         // Construct the pipeline state
         bool __internal_ConstructPso(IPsoManipulator* ptrManipulator) override
@@ -86,7 +93,7 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
 
         // Custom rendering instance
         BasicRendering renderingPso;
-        ModelInfo suzanne = mdlCtx.LoadModel("models/Suzanne.fbx", uploadBuffer);
+        ModelInfo suzanne = mdlCtx.LoadModel("models/Suzanne.fbx", uploadBuffer, sizeof(BasicRendering::Vertex), (FModelVertexCallback)&BasicRendering::CbVertexCreate);
         if (!suzanne)
             throw std::exception("Cannot load Suzanne!");
 

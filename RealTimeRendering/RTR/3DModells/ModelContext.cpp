@@ -4,7 +4,7 @@ RTR::ModelContext::ModelContext(UINT64 memoryBudget) :
     m_geometryDataBuffer(memoryBudget) // For now give all memory to the geometry data
 { }
 
-RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffer& uploader)
+RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffer& uploader, size_t vertexSize, FModelVertexCallback callback)
 {
     // Start with an info with valid index and invalid size
     ModelInfo infoOut;
@@ -35,7 +35,7 @@ RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffe
                 indexCount += asMesh->mFaces->mNumIndices;
 
             // Compute required size
-            size_t memorySizeVertices = sizeof(float) * 4 * vertexCount;
+            size_t memorySizeVertices = vertexSize * vertexCount;
             size_t memorySizeIndices = sizeof(unsigned int) * indexCount;
 
             // Allocate memory buffers on gpu buffer
@@ -56,12 +56,12 @@ RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffe
                 unsigned char* vertexData = (unsigned char*)uploader.ReserverUploadMemory(memorySizeVertices);
                 if (vertexData)
                 {
-                    memset(vertexData, 0x0, memorySizeVertices);
                     size_t offset = 0;
                     for (size_t i = 0; i < asMesh->mNumVertices; i++)
                     {
-                        memcpy(&vertexData[offset], &asMesh->mVertices[i], sizeof(aiVector3D));
-                        offset += sizeof(float) * 4;
+                        // Set this be handled by the callback
+                        callback(&vertexData[offset], i, asMesh);
+                        offset += vertexSize;
                     }
 
                     // Commit upload
