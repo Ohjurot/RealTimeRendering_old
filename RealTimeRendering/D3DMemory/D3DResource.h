@@ -31,6 +31,11 @@ namespace RTR
                 m_resourceState = state;
             }
 
+            inline ID3D12Resource* Get()
+            {
+                return m_ptrResource;
+            }
+
             // Resource pointer conversion
             inline operator ID3D12Resource* ()
             {

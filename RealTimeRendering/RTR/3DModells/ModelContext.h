@@ -46,6 +46,13 @@ namespace RTR
 
             // Load a model form disk
             ModelInfo LoadModel(const char* filePath, D3DUploadBuffer& uploader);
+            MeshInfo GetMeshInfo(ModelInfo& modelInfo, size_t idx = 0);
+
+            // Retrive buffer resource
+            inline D3DResource* GetGeometryBufferResource()
+            {
+                return &m_geometryDataBuffer;
+            }
 
         private:
             // Index and vertex buffer

@@ -58,6 +58,14 @@ RTR::GfxPsoManipulator::GfxPsoManipulator(D3D12_GRAPHICS_PIPELINE_STATE_DESC* pt
     ptrDesc->IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     ptrDesc->PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     ptrDesc->NumRenderTargets = 0;
+    ptrDesc->RTVFormats[0] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[1] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[2] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[3] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[4] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[5] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[6] = DXGI_FORMAT_UNKNOWN;
+    ptrDesc->RTVFormats[7] = DXGI_FORMAT_UNKNOWN;
     ptrDesc->DSVFormat = DXGI_FORMAT_UNKNOWN;
     ptrDesc->SampleDesc.Count = 1;
     ptrDesc->SampleDesc.Quality = 0;

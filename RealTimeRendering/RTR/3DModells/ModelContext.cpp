@@ -35,7 +35,7 @@ RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffe
                 indexCount += asMesh->mFaces->mNumIndices;
 
             // Compute required size
-            size_t memorySizeVertices = sizeof(aiVector3D) * vertexCount;
+            size_t memorySizeVertices = sizeof(float) * 4 * vertexCount;
             size_t memorySizeIndices = sizeof(unsigned int) * indexCount;
 
             // Allocate memory buffers on gpu buffer
@@ -53,7 +53,21 @@ RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffe
                 set.indexCount = indexCount;
 
                 // Upload vertex data
-                uploader.CopyBufferData(asMesh->mVertices, memorySizeVertices, (ID3D12Resource*)vertexPart.ptrBuffer, vertexPart.Offset);
+                unsigned char* vertexData = (unsigned char*)uploader.ReserverUploadMemory(memorySizeVertices);
+                if (vertexData)
+                {
+                    memset(vertexData, 0x0, memorySizeVertices);
+                    size_t offset = 0;
+                    for (size_t i = 0; i < asMesh->mNumVertices; i++)
+                    {
+                        memcpy(&vertexData[offset], &asMesh->mVertices[i], sizeof(aiVector3D));
+                        offset += sizeof(float) * 4;
+                    }
+
+                    // Commit upload
+                    uploader.CommitBufferCopy(vertexData, memorySizeVertices, vertexPart.ptrBuffer->Get(), vertexPart.Offset);
+                }
+
                 // Upload index data
                 unsigned char* indexData = (unsigned char*)uploader.ReserverUploadMemory(memorySizeIndices);
                 if (indexData)
@@ -68,7 +82,7 @@ RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffe
                     }
 
                     // Commit upload
-                    uploader.PostBufferCopy(indexData, memorySizeIndices, (ID3D12Resource*)indexPart.ptrBuffer, indexPart.Offset);
+                    uploader.CommitBufferCopy(indexData, memorySizeIndices, indexPart.ptrBuffer->Get(), indexPart.Offset);
                 }
 
                 // Store set
@@ -78,4 +92,12 @@ RTR::ModelInfo RTR::ModelContext::LoadModel(const char* filePath, D3DUploadBuffe
     }
 
     return infoOut;
+}
+
+RTR::MeshInfo RTR::ModelContext::GetMeshInfo(ModelInfo& modelInfo, size_t idx)
+{
+    // Check offset
+    if (idx >= modelInfo.count)
+        throw std::exception("Mesh index out of bounds");
+    return m_sets[modelInfo.idx + idx];
 }

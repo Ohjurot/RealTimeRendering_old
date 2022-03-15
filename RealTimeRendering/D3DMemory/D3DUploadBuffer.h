@@ -29,8 +29,8 @@ namespace RTR
             void* ReserverUploadMemory(UINT64 reservationSize);
 
             // Post memory copy executions
-            bool PostBufferCopy(void* ptrLocalMemory, UINT64 localMemorySize, ID3D12Resource* ptrTargetResource, UINT64 targetOffset = 0);
-            bool PostTextureCopy(void* ptrLocalMemory, DXGI_FORMAT format, UINT width, UINT height, UINT depth, UINT rowStride, ID3D12Resource* ptrTargetTexture, UINT destX = 0, UINT destY = 0, UINT destZ = 0, UINT subresourceIndex = 0);
+            bool CommitBufferCopy(void* ptrLocalMemory, UINT64 localMemorySize, ID3D12Resource* ptrTargetResource, UINT64 targetOffset = 0);
+            bool CommitTextureCopy(void* ptrLocalMemory, DXGI_FORMAT format, UINT width, UINT height, UINT depth, UINT rowStride, ID3D12Resource* ptrTargetTexture, UINT destX = 0, UINT destY = 0, UINT destZ = 0, UINT subresourceIndex = 0);
 
             // Image row with requirements
             static UINT GetRequiredImageRowStride(UINT width, UINT bytesPerPixel);

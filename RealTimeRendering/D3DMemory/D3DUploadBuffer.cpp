@@ -93,7 +93,7 @@ void* RTR::D3DUploadBuffer::ReserverUploadMemory(UINT64 reservationSize)
     return ptrReservation;
 }
 
-bool RTR::D3DUploadBuffer::PostBufferCopy(void* ptrLocalMemory, UINT64 localMemorySize, ID3D12Resource* ptrTargetResource, UINT64 targetOffset /*= 0*/)
+bool RTR::D3DUploadBuffer::CommitBufferCopy(void* ptrLocalMemory, UINT64 localMemorySize, ID3D12Resource* ptrTargetResource, UINT64 targetOffset /*= 0*/)
 {
     bool canCopy = !m_isExecuting;
     if (canCopy)
@@ -108,7 +108,7 @@ bool RTR::D3DUploadBuffer::PostBufferCopy(void* ptrLocalMemory, UINT64 localMemo
     return canCopy;
 }
 
-bool RTR::D3DUploadBuffer::PostTextureCopy(void* ptrLocalMemory, DXGI_FORMAT format, UINT width, UINT height, UINT depth, UINT rowStride, ID3D12Resource* ptrTargetTexture, UINT destX /*= 0*/, UINT destY /*= 0*/, UINT destZ /*= 0*/, UINT subresourceIndex /*= 0*/)
+bool RTR::D3DUploadBuffer::CommitTextureCopy(void* ptrLocalMemory, DXGI_FORMAT format, UINT width, UINT height, UINT depth, UINT rowStride, ID3D12Resource* ptrTargetTexture, UINT destX /*= 0*/, UINT destY /*= 0*/, UINT destZ /*= 0*/, UINT subresourceIndex /*= 0*/)
 {
     bool canCopy = !m_isExecuting;
     if (canCopy)
@@ -169,7 +169,7 @@ bool RTR::D3DUploadBuffer::CopyBufferData(void* ptrLocalMemory, UINT64 localMemo
         memcpy(ptrMemory, ptrLocalMemory, localMemorySize);
 
         // Post copy
-        success = PostBufferCopy(ptrMemory, localMemorySize, ptrTargetResource, targetOffset);
+        success = CommitBufferCopy(ptrMemory, localMemorySize, ptrTargetResource, targetOffset);
     }
 
     return success;
@@ -202,7 +202,7 @@ bool RTR::D3DUploadBuffer::CopyTextureData(void* ptrLocalMemory, DXGI_FORMAT for
         }
 
         // Issue resource copy
-        success = PostTextureCopy(ptrMemory, format, width, height, depth, requiredRowStride, ptrTargetTexture, destX, destY, destZ, subresourceIndex);
+        success = CommitTextureCopy(ptrMemory, format, width, height, depth, requiredRowStride, ptrTargetTexture, destX, destY, destZ, subresourceIndex);
     }
 
     return success;
