@@ -40,7 +40,7 @@ RTR::D3DUploadBuffer::D3DUploadBuffer(UINT64 bufferSize) :
     // Create upload resource
     RTR_CHECK_HRESULT(
         "Creating upload resource buffer",
-        GetD3D12DevicePtr()->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&m_d3dResource))
+        GetD3D12DevicePtr()->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_d3dResource))
     );
 
     // Map buffer
