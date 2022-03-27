@@ -44,6 +44,13 @@ namespace RTR
             void Wait();
             bool CheckFinished();
             
+            // Sync execution
+            inline void ExecuteSync()
+            {
+                Execute();
+                Wait();
+            }
+
             // Get execution state
             inline bool GetExecutionState()
             {

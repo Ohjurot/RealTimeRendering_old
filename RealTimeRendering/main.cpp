@@ -6,6 +6,7 @@
 #include <D3DCommon/D3DDescriptorHeap.h>
 #include <D3DMemory/D3DUploadBuffer.h>
 #include <RTR/3DModells/ModelContext.h>
+#include <RTR/3DModells/MatrixBuffer.h>
 #include <imgui/ImGuiManager.h>
 #include <Util/DirWatcher.h>
 
@@ -25,17 +26,78 @@ class BasicRendering : public D3DPipelineState
 
     public:
         // Constructor that load shaders
-        BasicRendering() :
+        BasicRendering(MatrixBuffer& matBuffer, D3DDescriptorHandle handle) :
+            // Shaders
             m_vs(L"shaders/BasicVS.hlsl", RTR_SHADER_VS_6_0, L"BasicVS"),
             m_ps(L"shaders/BasicPS.hlsl", RTR_SHADER_PS_6_0, L"BasicPS"),
-            D3DPipelineState(PipelineStateType::Graffics)
-        {}
+            D3DPipelineState(PipelineStateType::Graffics),
+
+            // Matrices
+            m_matProj(matBuffer.GetMatrix()),
+            m_matView(matBuffer.GetMatrix()),
+            m_matModel(matBuffer.GetMatrix()),
+
+            // Configuration for the root signature
+            m_rc(PipelineStateType::Graffics, 1,
+                RootConfigurationEntry::MakeDescriptorTable(handle)
+            )
+        {
+            D3D12_CONSTANT_BUFFER_VIEW_DESC cbv;
+            cbv.BufferLocation = matBuffer.GetAddress() + (m_matProj.offset * sizeof(DirectX::XMMATRIX));
+            cbv.SizeInBytes = sizeof(DirectX::XMMATRIX) * 4;
+            GetD3D12DevicePtr()->CreateConstantBufferView(&cbv, handle);
+        } 
 
         // Vertex creation callback
         static void CbVertexCreate(Vertex* ptrVtx, size_t vtxIdx, const aiMesh* ptrMesh)
         {
             memcpy(ptrVtx, &ptrMesh->mVertices[vtxIdx], sizeof(aiVector3D));
             ptrVtx->pw = 1.0f;
+        }
+
+        // Easy bind
+        bool Bind(D3DCommandList& cmdList)
+        {
+            bool bound = cmdList.BindPipelineState(*this);
+            if (bound)
+            {
+                cmdList.BindRootConfiguration(m_rc);
+            }
+            return bound;
+        }
+
+        // Internally updates all transforms
+        void UpdateMatrices(MatrixBuffer& matBuffer, float aspectRatio)
+        {
+            // Projection
+            m_matProj.M = DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(120.f), aspectRatio, 0.1f, 10.0f);
+            matBuffer.UpdateCPU(m_matProj);
+
+            // View
+            m_matView.M = DirectX::XMMatrixTranslation(m_camPosition[0], m_camPosition[1], m_camPosition[2]);
+            m_matView.M = DirectX::XMMatrixInverse(nullptr, m_matView.M);
+            matBuffer.UpdateCPU(m_matView);
+
+            // Model
+            m_matModel.M = DirectX::XMMatrixRotationRollPitchYaw(
+                DirectX::XMConvertToRadians(m_modelRotation[0]),
+                DirectX::XMConvertToRadians(m_modelRotation[1]),
+                DirectX::XMConvertToRadians(m_modelRotation[2])
+            );
+            matBuffer.UpdateCPU(m_matModel);
+        }
+
+        // Makes ImGui calls
+        void UpdateImgui()
+        {
+            ImGui::Begin("Basic Rendering");
+
+            // Camera position
+            ImGui::DragFloat3("Camera Position", m_camPosition, 0.1f);
+            // Model rotation
+            ImGui::DragFloat3("Model Rotation", m_modelRotation, 5.0f);
+
+            ImGui::End();
         }
 
     protected:
@@ -65,6 +127,18 @@ class BasicRendering : public D3DPipelineState
     private:
         // My shaders
         Shader m_vs, m_ps;
+        RootConfiguration m_rc;
+
+        // Projection
+        Matrix m_matProj;
+
+        // View
+        Matrix m_matView;
+        float m_camPosition[3] = {0.0f, 0.0f, -10.f};
+
+        // Model
+        Matrix m_matModel;
+        float m_modelRotation[3] = { 0.0f, 0.0f, 0.0f };
 };
 
 
@@ -82,6 +156,10 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
         D3DUploadBuffer uploadBuffer(MemMiB(128));
         ModelContext mdlCtx(MemMiB(512));
 
+        // Matrix buffer
+        MatrixBuffer matBuffer(32);
+        D3DDescriptorHeap cbvSrvUavHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32);
+
         // Window
         Window wnd(L"RTR Window", queue);
         ImGuiManager::Init(&wnd);
@@ -92,7 +170,7 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
         list.ExecutSync();
 
         // Custom rendering instance
-        BasicRendering renderingPso;
+        BasicRendering renderingPso(matBuffer, cbvSrvUavHeap[0]);
         ModelInfo suzanne = mdlCtx.LoadModel("models/Suzanne.fbx", uploadBuffer, sizeof(BasicRendering::Vertex), (FModelVertexCallback)&BasicRendering::CbVertexCreate);
         if (!suzanne)
             throw std::exception("Cannot load Suzanne!");
@@ -113,15 +191,27 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
                 wnd.Resize();
             }
 
+            // === UPDATE DATA ===
+            // Update suzanne
+            renderingPso.UpdateMatrices(matBuffer, (float)wnd.GetWidth() / wnd.GetHeight());
+
+            // Matrix copy
+            matBuffer.EnsureResourceState(list, D3D12_RESOURCE_STATE_COPY_DEST);
+            list.ExecutSync();
+            matBuffer.UpdateGPU(uploadBuffer);
+            uploadBuffer.ExecuteSync();
+            matBuffer.EnsureResourceState(list, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
             // === BEGIN DRAW ===
             list.BeginRender(wnd.GetCurrentBackBuffer(), D3D12_RESOURCE_STATE_PRESENT, wnd.GetCurrentCPUHandle());
             ImGuiManager::NewFrame();
             
             // Keeping the imgui demo
-            ImGui::ShowDemoWindow();
-            
+            renderingPso.UpdateImgui();
+
             // Render suzanne
-            if (list.BindPipelineState(renderingPso))
+            list.BindDescriptorHeaps(cbvSrvUavHeap);
+            if (renderingPso.Bind(list))
             {
                 // Bind viewport
                 D3D12_VIEWPORT vp;
@@ -163,6 +253,8 @@ INT wWinMain_safe(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR cmdArgs, I
         list.~D3DCommandList();
 
         // Destroy custom instances
+        cbvSrvUavHeap.~D3DDescriptorHeap();
+        matBuffer.~MatrixBuffer();
         mdlCtx.~ModelContext();
         renderingPso.~BasicRendering();
 
